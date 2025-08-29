@@ -14,8 +14,6 @@ jobs:
 
     container:
       image: alpine/helm:3.18
-      volumes:
-        - /app:${{ github.workspace }}
 
     steps:
       - name: Checkout repository
@@ -28,7 +26,7 @@ jobs:
         run: helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package Helm chart
-        run: helm package /app/helmcharts/${{ matrix.chart }} --destination /app/helmcharts/
+        run: helm package ${{ matrix.chart }}
 
       - name: Push Helm chart
-        run: helm push /app/helmcharts/${{ matrix.chart }}*.tgz ghcr.io/rossvideo/catena-helm
+        run: helm push ${{ matrix.chart }}*.tgz ghcr.io/rossvideo/catena-helm
