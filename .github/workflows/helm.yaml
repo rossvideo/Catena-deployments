@@ -1,0 +1,34 @@
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chart: ["catena"]
+
+    container:
+      image: alpine/helm:3.18
+      volumes:
+        - /app:${{ github.workspace }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Print stuff
+        run: pwd; find .
+      
+      - name: Helm Login
+        run: helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package Helm chart
+        run: helm package /app/helmcharts/${{ matrix.chart }} --destination /app/helmcharts/
+
+      - name: Push Helm chart
+        run: helm push /app/helmcharts/${{ matrix.chart }}*.tgz ghcr.io/rossvideo/catena-helm
