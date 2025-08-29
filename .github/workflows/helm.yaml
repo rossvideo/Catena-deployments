@@ -26,7 +26,7 @@ jobs:
         run: helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package Helm chart
-        run: helm package ${{ matrix.chart }}
+        run: helm package helmcharts/${{ matrix.chart }}
 
       - name: Push Helm chart
         run: helm push ${{ matrix.chart }}*.tgz ghcr.io/rossvideo/catena-helm
