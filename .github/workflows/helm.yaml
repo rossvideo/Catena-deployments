@@ -29,4 +29,4 @@ jobs:
         run: helm package helmcharts/${{ matrix.chart }}
 
       - name: Push Helm chart
-        run: helm push ${{ matrix.chart }}*.tgz oci://ghcr.io/rossvideo/catena-helm
+        run: helm push ${{ matrix.chart }}*.tgz oci://ghcr.io/rossvideo
