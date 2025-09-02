@@ -8,25 +8,21 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        chart: ["catena"]
-
-    container:
-      image: alpine/helm:3.18
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Print stuff
-        run: pwd; find .
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
       
-      - name: Helm Login
-        run: helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Package Helm chart
-        run: helm package helmcharts/${{ matrix.chart }}
-
-      - name: Push Helm chart
-        run: helm push ${{ matrix.chart }}*.tgz oci://ghcr.io/rossvideo
+      - name: Run helm/chart-releaser
+        uses: helm/chart-releaser-action@v1.7.0
+        with:
+          charts_dir: helmcharts
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
