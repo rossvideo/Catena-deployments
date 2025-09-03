@@ -5,6 +5,9 @@ on:
     branches:
       - main # mostly will be triggered by the main catena, but can also be triggered by changes here
       - develop
+    paths:
+      - 'container/**'
+      - '.github/workflows/container.yaml'
 
 env:
   REGISTRY: ghcr.io
