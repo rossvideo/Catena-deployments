@@ -94,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: examples
-          path: ${{ github.workspace }}/examples
+          path: ${{ env.WORKDIR }}/examples
           retention-days: 2
       
       - name: Generate matrix for example builds
@@ -183,7 +183,7 @@ jobs:
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
-          file: docker/example.dockerfile
+          file: container/example.dockerfile
           push: false
           target: single
           tags: ${{ steps.meta.outputs.tags }}
@@ -244,7 +244,7 @@ jobs:
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
-          file: docker/example.dockerfile
+          file: container/example.dockerfile
           push: false
           target: all
           tags: ${{ steps.meta.outputs.tags }}
