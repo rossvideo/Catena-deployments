@@ -1,3 +1,5 @@
+name: Publish Helm Chart
+
 on:
   push:
     branches:
