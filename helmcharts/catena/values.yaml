@@ -79,7 +79,7 @@ ingress:
     enabled: false
     # secret that contains the tls certificate
     secretName: ""
-  # the hostBase is not given
+  # if the hostBase is not given
   host: "catena-example.local"
   # if hostBase is given, the host will be derived from {image.example}-{image.connection}.{hostBase}
   hostBase: ""
