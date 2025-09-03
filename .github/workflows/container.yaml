@@ -43,8 +43,11 @@ jobs:
           repository: rossvideo/Catena
           submodules: 'recursive'
 
-      - name: Print stuf
+      - name: Print stuff
         run: |
+          pwd
+          ls
+          cd $WORKDIR
           pwd
           ls
 
