@@ -1,0 +1,7 @@
+services:
+  catena:
+    image: ghcr.io/rossvideo/catena:${TAG}
+    ports:
+      - ${PORT}:${PORT}
+    environment:
+      CATENA_PORT: ${PORT}
