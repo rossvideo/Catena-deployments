@@ -1,7 +1,6 @@
 name: Build Example images
 
 on:
-  push:
   repository_dispatch:
     types: [build-examples]
 
@@ -62,10 +61,6 @@ jobs:
       contents: read
     
     steps:
-      - name: Print stuff
-        run: |
-          echo "trigger_ref: ${{ needs.check-trigger.outputs.trigger_ref }}"
-
       - name: Checkout Catena
         uses: actions/checkout@v4
         with:
@@ -215,7 +210,7 @@ jobs:
         with:
           context: .
           file: container/example.dockerfile
-          push: false
+          push: true
           target: single
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -225,7 +220,6 @@ jobs:
             EXAMPLE_PATH=${{ steps.process-name.outputs.example_path }}
             SINGLE_SOURCE=${{ steps.process-name.outputs.single_source }}
             WORKDIR=${{ env.WORKDIR }}
-
 
   build-and-push-all-examples:
     runs-on: ubuntu-latest
@@ -276,7 +270,7 @@ jobs:
         with:
           context: .
           file: container/example.dockerfile
-          push: false
+          push: true
           target: all
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
