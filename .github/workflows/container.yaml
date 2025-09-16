@@ -27,6 +27,7 @@ jobs:
             echo "triggered=true" >> $GITHUB_OUTPUT
             if [ -n "${{ github.event.client_payload.ref }}" ]; then
               echo "Trigger ref: ${{ github.event.client_payload.ref }}"
+              echo "trigger_ref=${{ github.event.client_payload.ref }}" >> $GITHUB_OUTPUT
             else
               echo "No ref provided in client_payload, failing build."
               echo "triggered=false" >> $GITHUB_OUTPUT
@@ -61,6 +62,10 @@ jobs:
       contents: read
     
     steps:
+      - name: Print stuff
+        run: |
+          echo "trigger_ref: ${{ needs.check-trigger.outputs.trigger_ref }}"
+
       - name: Checkout Catena
         uses: actions/checkout@v4
         with:
