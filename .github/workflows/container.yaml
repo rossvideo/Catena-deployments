@@ -62,6 +62,10 @@ jobs:
       contents: read
     
     steps:
+      - name: Print stuff
+        run: |
+          echo "trigger_ref: ${{ needs.check-trigger.outputs.trigger_ref }}"
+
       - name: Checkout Catena
         uses: actions/checkout@v4
         with:
