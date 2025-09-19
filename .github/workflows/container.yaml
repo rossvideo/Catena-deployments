@@ -303,6 +303,7 @@ jobs:
     needs: build-examples
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
