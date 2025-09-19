@@ -169,6 +169,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download examples
+        uses: actions/download-artifact@v4
+        with:
+          name: examples
+          path: ${{ github.workspace }}/examples
+
       - name: Process example name
         id: process-name
         run: |
@@ -301,11 +307,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Download examples
-        uses: actions/download-artifact@v4
-        with:
-          name: examples
       
       - name: "Build examples json"
         shell: python
