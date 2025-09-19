@@ -280,3 +280,53 @@ jobs:
             EXAMPLE_PATH=examples
             WORKDIR=${{ env.WORKDIR }}
 
+  compile-examples-list:
+    runs-on: ubuntu-latest
+    needs: build-examples
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: "Build examples json"
+        shell: python
+        run: |
+          import json
+          import os
+          # workflow can just inject the output, that's cool
+          # its a json array of "connection/example-connection"
+          examples = json.loads('${{ needs.build-examples.outputs.examples }}')
+          # build a json of connection -> [examples]
+          out_json = {}
+          # loop through examples
+          for example in examples:
+            # split on /
+            conn, ex_name = example.split('/')
+            # remove -conn from ex_name if it exists
+            if ex_name.endswith(f'-{conn}'):
+              ex_name = ex_name[:-(len(conn)+1)]
+            # add to out_json
+            if not conn in out_json:
+              out_json[conn] = []
+            out_json[conn].append(ex_name)
+          # write to examples.json
+          with open('examples.json', 'w') as f:
+            json.dump(out_json, f, indent=2)
+      
+      - name: Print stuff
+        run: |
+          cat examples.json
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          add-paths: examples.json
+          commit-message: Update examples.json [skip ci]
+          branch: examples-changed
+          title: Update examples.json
+          body: This PR updates the `examples.json` file with the latest built examples.
+          reviewers: 'abrown-RV,NR-RV,ctwarog-ross'
+          delete-branch: true
