@@ -53,5 +53,5 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_EMAIL"
           git add README.md
-          git commit -m "Update README examples section" || echo "No changes to commit"
+          git commit -m "Update README examples section"
           git push origin ${GITHUB_REF}
