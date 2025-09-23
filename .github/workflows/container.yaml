@@ -168,15 +168,12 @@ jobs:
           if [[ ! "$EXAMPLE" =~ $CONNECTION$ ]]; then
             EXAMPLE="${EXAMPLE}-${CONNECTION}"
           fi
-          SINGLE_SOURCE=$(echo "$CONNECTION" | tr '[:upper:]' '[:lower:]')
           echo "example_path=${EXAMPLE_PATH}" >> $GITHUB_OUTPUT
           echo "connection=${CONNECTION}" >> $GITHUB_OUTPUT
           echo "example=${EXAMPLE}" >> $GITHUB_OUTPUT
-          echo "single_source=${SINGLE_SOURCE}" >> $GITHUB_OUTPUT
           echo "EXAMPLE_PATH=${EXAMPLE_PATH}"
           echo "CONNECTION=${CONNECTION}"
           echo "EXAMPLE=${EXAMPLE}"
-          echo "SINGLE_SOURCE=${SINGLE_SOURCE}"
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
@@ -209,75 +206,15 @@ jobs:
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
-          file: container/example.dockerfile
+          file: container/Dockerfile
           push: true
-          target: single
+          target: ${{ steps.process-name.outputs.connection }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             CONNECTION=${{ steps.process-name.outputs.connection }}
             EXAMPLE=${{ steps.process-name.outputs.example }}
             EXAMPLE_PATH=${{ steps.process-name.outputs.example_path }}
-            SINGLE_SOURCE=${{ steps.process-name.outputs.single_source }}
-            WORKDIR=${{ env.WORKDIR }}
-
-  build-and-push-all-examples:
-    runs-on: ubuntu-latest
-    needs: build-examples
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download examples
-        uses: actions/download-artifact@v4
-        with:
-          name: examples
-          path: ${{ github.workspace }}/examples
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-        with:
-          images: ${{ env.REGISTRY }}/rossvideo/catena
-          # -dev suffix for now, until we figure out building on main
-          tags: |
-            type=raw,value=latest-dev
-          labels: |
-            org.opencontainers.image.title=Catena Examples
-            org.opencontainers.image.description=Self contained example for Catena Examples
-            org.opencontainers.image.vendor=Ross Video
-
-      - name: Print stuff
-        run: |
-          echo "tags: ${{ steps.meta.outputs.tags }}"
-          echo "labels: ${{ steps.meta.outputs.labels }}"
-          find .
-      
-      - name: Build and push image
-        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
-        with:
-          context: .
-          file: container/example.dockerfile
-          push: true
-          target: all
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            CONNECTION=gRPC
-            EXAMPLE=one-of-everything-gRPC
-            EXAMPLE_PATH=examples
             WORKDIR=${{ env.WORKDIR }}
 
   compile-examples-list:
