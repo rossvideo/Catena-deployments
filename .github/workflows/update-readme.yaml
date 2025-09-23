@@ -6,6 +6,7 @@ on:
       - main
       - update-readme
     paths:
+      - .github/workflows/update-readme.yaml
       - examples.json
 
 jobs:
