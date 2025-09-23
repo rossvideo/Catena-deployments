@@ -7,6 +7,7 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 - [Github for this repo](https://github.com/rossvideo/Catena-deployments)
 
 ## List of examples
+<!-- EXAMPLES_START -->
 ### gRPC
 - external-object-request
 - one-of-everything
@@ -23,6 +24,7 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 - structs-with-authz
 - use-commands
 - use-menus
+<!-- EXAMPLES_END -->
 
 ## Supported tags
 
