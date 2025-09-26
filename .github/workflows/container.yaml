@@ -51,6 +51,7 @@ jobs:
       volumes:
         # env context does not work here, that's really DUMB
         - ${{ github.workspace }}/Catena:/app
+      options: --user root:root
       env:
         BUILD_TARGET: build/cpp
         CMAKE_INSTALL_PREFIX: /usr/local/.local
