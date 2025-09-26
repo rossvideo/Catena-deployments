@@ -8,13 +8,6 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 
 ## List of examples
 <!-- EXAMPLES_START -->
-### version
-- .
-- .
-- 0
-- 0
-- 1
-- 6
 ### gRPC
 - external-object-request
 - one-of-everything
