@@ -43,6 +43,7 @@ jobs:
     if: needs.check-trigger.outputs.triggered == 'true'
     outputs:
       examples: ${{ steps.generate-matrix.outputs.examples }}
+      version: ${{ steps.get-version.outputs.version }}
     container:
       image: ghcr.io/rossvideo/catena-toolchain-cpp:latest
       credentials:
@@ -131,6 +132,14 @@ jobs:
             EXAMPLES_JSON="[${EXAMPLES_JSON%,}]"
             echo "examples=${EXAMPLES_JSON}" >> $GITHUB_OUTPUT
 
+      - name: Get version
+        id: get-version
+        run: |
+          # Extract version from VERSION.txt
+          VERSION=$(sed -nE 's/[^-]+-v([^-]+)-.*/\1/p' sdks/cpp/VERSION.txt)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
       - name: Print examples
         run: |
           echo "Examples found:"
@@ -218,7 +227,7 @@ jobs:
             EXAMPLE_PATH=${{ steps.process-name.outputs.example_path }}
             WORKDIR=${{ env.WORKDIR }}
 
-  compile-examples-list:
+  compile-examples-json:
     runs-on: ubuntu-latest
     needs: build-examples
     permissions:
@@ -239,6 +248,7 @@ jobs:
           examples = json.loads('${{ needs.build-examples.outputs.examples }}')
           # build a json of connection -> [examples]
           out_json = {}
+          out_json['version'] = '${{ needs.build-examples.outputs.version }}'
           # loop through examples
           for example in examples:
             # split on /

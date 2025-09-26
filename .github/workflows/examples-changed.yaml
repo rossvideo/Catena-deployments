@@ -1,4 +1,4 @@
-name: Update README Examples Section
+name: The examples.json file has changed, do stuff
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - examples.json
 
 jobs:
-  update-readme:
+  update-files:
     runs-on: ubuntu-latest
 
     steps:
@@ -48,10 +48,32 @@ jobs:
           with open(README_MD, "w") as f:
               f.write(new_readme)
 
+      - name: Update Helm Chart
+        shell: python
+        run: |
+          import json
+          import re
+
+          CHART_YAML = "helmcharts/catena/Chart.yaml"
+          EXAMPLES_JSON = "examples.json"
+
+          with open(EXAMPLES_JSON) as f:
+              examples = json.load(f)
+          catena_version = examples["version"]
+          print(f"Catena version from {EXAMPLES_JSON}: {catena_version}")
+          with open(CHART_YAML) as f:
+              chart_yaml = f.read()
+          chart_yaml = re.sub(r"^version: .*$", f"version: {catena_version}", chart_yaml, flags=re.MULTILINE)
+          chart_yaml = re.sub(r"^appVersion: .*$", f'appVersion: "{catena_version}"', chart_yaml, flags=re.MULTILINE)
+          with open(CHART_YAML, "w") as f:
+              f.write(chart_yaml)
+          print(f"Updated {CHART_YAML} to version {catena_version}")
+
       - name: Commit and push changes
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_EMAIL"
           git add README.md
-          git commit -m "Update README examples section"
+          git add helmcharts/catena/Chart.yaml
+          git commit -m "Update files from examples.json changes"
           git push origin ${GITHUB_REF}

@@ -2,5 +2,8 @@ apiVersion: v2
 name: catena
 description: Helm chart for running Catena examples in kubernetes
 type: application
-version: 0.1.2
-appVersion: "0.0.14"
+# Automatically updated to match the version of the application
+# if a manual update is needed, append a .X to the end of the version
+version: 0.0.16
+# Automatically updated to match the version of the application
+appVersion: "0.0.16"
