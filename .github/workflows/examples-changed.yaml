@@ -31,6 +31,7 @@ jobs:
               examples = json.load(f)
           # build the markdown content
           lines = []
+          del examples["version"]
           for conn in examples:
               lines.append(f"### {conn}")
               for ex in sorted(examples[conn]):
