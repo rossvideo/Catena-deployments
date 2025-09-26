@@ -1,4 +1,5 @@
 {
+  "version": "0.0.16",
   "gRPC": [
     "structs-with-authz-yaml",
     "structs-with-authz",

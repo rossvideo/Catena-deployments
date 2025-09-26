@@ -84,8 +84,8 @@ Create the liveness probe based on connection
 {{- if .Values.livenessProbe }}
 {{- toYaml .Values.livenessProbe }}
 {{- else if eq .Values.image.connection "gRPC" -}}
-exec:
-  command: ["/healthcheck.sh"]
+grpc:
+  port: {{ .Values.service.port }}
 {{- else if eq .Values.image.connection "REST" -}}
 httpGet:
   path: /st2138-api/v1/health
