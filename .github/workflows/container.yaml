@@ -136,7 +136,7 @@ jobs:
         id: get-version
         run: |
           # Extract version from VERSION.txt
-          VERSION=$(sed -nE 's/[^-]+-v([^-]+)-.*/\1/p' sdks/cpp/VERSION.txt)
+          VERSION=$(sed -nE 's/[^-]+-v([^-]+)-.*/\1/p' ${WORKDIR}/sdks/cpp/VERSION.txt)
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${VERSION}"
 
