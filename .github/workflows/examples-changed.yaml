@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - .github/workflows/update-readme.yaml
-      - examples.json
+      - '.github/workflows/examples-changed.yaml'
+      - 'examples.json'
 
 jobs:
   update-files:
