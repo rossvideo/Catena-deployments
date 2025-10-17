@@ -260,6 +260,11 @@ jobs:
             if not conn in out_json:
               out_json[conn] = []
             out_json[conn].append(ex_name)
+          # sort the example names for each connection
+          for conn in out_json:
+            if conn == 'version':
+              continue
+            out_json[conn] = sorted(out_json[conn])
           # write to examples.json
           with open('examples.json', 'w') as f:
             json.dump(out_json, f, indent=2)
