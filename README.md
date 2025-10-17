@@ -18,6 +18,7 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 - use-menus
 ### REST
 - asset-request
+- discovery
 - one-of-everything
 - status-update
 - status-update-JSON
