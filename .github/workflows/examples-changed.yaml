@@ -3,8 +3,7 @@ name: The examples.json file has changed, do stuff
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: ["main"]
     paths:
       - '.github/workflows/examples-changed.yaml'
       - 'examples.json'
