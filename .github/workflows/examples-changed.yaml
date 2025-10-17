@@ -2,7 +2,7 @@ name: The examples.json file has changed, do stuff
 
 on:
   push:
-    branches: ["main", "workflow-testing"]
+    branches: ["main"]
     paths:
       - '.github/workflows/examples-changed.yaml'
       - 'examples.json'
