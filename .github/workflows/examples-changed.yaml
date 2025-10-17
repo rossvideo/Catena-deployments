@@ -76,5 +76,5 @@ jobs:
           git config user.email "$GITHUB_EMAIL"
           git add README.md
           git add helmcharts/catena/Chart.yaml
-          git commit -m "Update files from examples.json changes"
+          git commit -m "Update files from examples.json changes" || true
           git push origin ${GITHUB_REF}
