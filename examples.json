@@ -1,22 +1,23 @@
 {
   "version": "0.0.16",
   "gRPC": [
+    "one-of-everything",
+    "status-update",
+    "use-menus",
+    "use-commands",
     "structs-with-authz-yaml",
     "structs-with-authz",
-    "use-menus",
-    "external-object-request",
-    "one-of-everything",
-    "status-update",
-    "use-commands"
+    "external-object-request"
   ],
   "REST": [
-    "one-of-everything",
-    "status-update",
-    "use-commands",
-    "structs-with-authz-JSON",
-    "status-update-JSON",
-    "structs-with-authz",
     "asset-request",
-    "use-menus"
+    "use-commands",
+    "status-update-JSON",
+    "status-update",
+    "structs-with-authz-JSON",
+    "use-menus",
+    "structs-with-authz",
+    "discovery",
+    "one-of-everything"
   ]
 }
