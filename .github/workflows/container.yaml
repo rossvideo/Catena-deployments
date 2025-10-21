@@ -277,7 +277,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           add-paths: examples.json
-          commit-message: Update examples.json [skip ci]
+          commit-message: Update examples.json
           branch: examples-changed
           title: Update examples.json
           body: This PR updates the `examples.json` file with the latest built examples.
