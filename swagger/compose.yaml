@@ -5,15 +5,18 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - ST2138_URLS=[{"url":"https://one-of-everything-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"one-of-everything"},
-                     {"url":"https://structs-with-authz-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"structs-with-authz"},
-                     {"url":"https://status-update-json-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"status-update-json"},
-                     {"url":"https://asset-request-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"asset-request"},
-                     {"url":"https://status-update-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"status-update"},
-                     {"url":"https://structs-with-authz-json-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"structs-with-authz-json"},
-                     {"url":"https://use-menus-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"use-menus"},
-                     {"url":"https://use-commands-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"use-commands"}]
-  
+      - ST2138_REMOVE_URLS=true
+      - ST2138_ADD_URLS=[{"url":"https://one-of-everything-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"one-of-everything"},
+                        {"url":"https://structs-with-authz-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"structs-with-authz"},
+                        {"url":"https://status-update-json-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"status-update-json"},
+                        {"url":"https://asset-request-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"asset-request"},
+                        {"url":"https://status-update-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"status-update"},
+                        {"url":"https://structs-with-authz-json-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"structs-with-authz-json"},
+                        {"url":"https://use-menus-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"use-menus"},
+                        {"url":"https://use-commands-rest.catena.dev.rossvideo.com:443/st2138-api/v1","name":"use-commands"}]
+      - ST2138_REMOVE_SECURITY=true
+      - ST2138_ADD_BEARER=true
+      
     ports:
       - "8080:8080"
       - "80:80"

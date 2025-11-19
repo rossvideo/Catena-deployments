@@ -24,3 +24,13 @@ if [ -n "$ST2138_URLS" ]; then
   echo "sed 2"
   sed -i "\|  - url: https://device.catenamedia.tv:443/st2138-api/v1|d" /usr/share/nginx/html/openapi.yaml
 fi
+
+# TODO: tomorrow morning
+# add this
+#  securitySchemes:
+      # BearerAuth:
+      #   type: http
+      #   scheme: bearer
+#  and
+# security:
+#  - BearerAuth: []
