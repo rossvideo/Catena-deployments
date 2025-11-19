@@ -13,6 +13,7 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 - audiodeck-yaml
 - external-object-request
 - one-of-everything
+- simple-dashboard-audiodeck
 - status-update
 - use-commands
 - use-menus
