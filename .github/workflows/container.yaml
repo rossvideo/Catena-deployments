@@ -83,9 +83,9 @@ jobs:
           cd ${WORKDIR}/${BUILD_TARGET}
           pwd
           cmake -G Ninja -DCONNECTIONS=${CONNECTIONS} -DUNIT_TESTING=off \
-            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} \
-            -DGLOG_LOGGING_DIR=${WORKDIR}/logs \
+            -DLOG_DIR=${WORKDIR}/logs \
             -B ${WORKDIR}/${BUILD_TARGET} ${WORKDIR}/sdks/cpp
           ninja
           # copy the built examples to a directory for packaging
