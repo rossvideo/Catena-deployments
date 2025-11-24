@@ -11,7 +11,6 @@ ENV CATENA_EXAMPLE=${EXAMPLE}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    libgoogle-glog-dev \
     && rm -rf /var/lib/apt/lists/*
 
 USER ${USER_GROUP}
