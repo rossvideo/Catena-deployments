@@ -11,6 +11,9 @@ ENV CATENA_EXAMPLE=${EXAMPLE}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    libcurl4 \
+    libavahi-common3 \
+    libavahi-client3 \
     && rm -rf /var/lib/apt/lists/*
 
 USER ${USER_GROUP}
