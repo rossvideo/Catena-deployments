@@ -45,7 +45,7 @@ jobs:
       examples: ${{ steps.generate-matrix.outputs.examples }}
       version: ${{ steps.get-version.outputs.version }}
     container:
-      image: ghcr.io/rossvideo/catena-toolchain-cpp:latest
+      image: ghcr.io/rossvideo/catena-cpp-toolchain:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
