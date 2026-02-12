@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   catena:
   - apiVersion: v2
+    appVersion: 0.0.18
+    created: "2026-02-12T17:45:56.474253055Z"
+    description: Helm chart for running Catena examples in kubernetes
+    digest: f825f2a0079aa5cb7310fc2feb3511f42a387cd81f93f5940a698361e73fd85c
+    name: catena
+    type: application
+    urls:
+    - https://github.com/rossvideo/Catena-deployments/releases/download/catena-0.0.18/catena-0.0.18.tgz
+    version: 0.0.18
+  - apiVersion: v2
     appVersion: 0.0.17
     created: "2025-11-19T17:43:29.657512855Z"
     description: Helm chart for running Catena examples in kubernetes
@@ -21,4 +31,4 @@ entries:
     urls:
     - https://github.com/rossvideo/Catena-deployments/releases/download/catena-0.0.16/catena-0.0.16.tgz
     version: 0.0.16
-generated: "2025-11-19T17:43:29.65752593Z"
+generated: "2026-02-12T17:45:56.474267953Z"
