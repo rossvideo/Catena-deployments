@@ -4,6 +4,6 @@ description: Helm chart for running Catena examples in kubernetes
 type: application
 # Automatically updated to match the version of the application
 # if a manual update is needed, append a .X to the end of the version
-version: 0.0.17
+version: 0.0.18
 # Automatically updated to match the version of the application
-appVersion: "0.0.17"
+appVersion: "0.0.18"
