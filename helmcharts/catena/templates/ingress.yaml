@@ -33,4 +33,11 @@ spec:
                 name: {{ include "catena.fullname" $ }}
                 port:
                   number: {{ .Values.service.port }}
+          - path: /connect/connection-props.xml
+            pathType: Prefix
+            backend:
+              service:
+                name: "dashboard_discovery"
+                port:
+                  number: {{ .Values.dashboard_port }}
 {{- end }}

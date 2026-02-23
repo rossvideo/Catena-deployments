@@ -44,9 +44,16 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            - name: dashboard
+              containerPort: {{ .Values.dashboard_port }}
+              protocol: TCP
           env:
             - name: CATENA_PORT
               value: {{ .Values.service.port | quote }}
+            - name: CATENA_HOSTNAME
+              value: {{ .Values.ingress.host | quote }}
+            - name: CATENA_DASHBOARD_PORT
+              value: {{ .Values.dashboard_port | quote }}
           {{- if .Values.livenessProbeEnabled }}
           livenessProbe:
             {{- include "catena.image.live" . | nindent 12 }}
