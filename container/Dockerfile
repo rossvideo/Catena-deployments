@@ -9,8 +9,6 @@ ARG USER_GROUP=1000:1000
 # not intended to be set by the build, but is used to avoid hardcoding the path in the Dockerfile and to make it easier to change the path if needed.
 ARG EXAMPLE_CONTAINER_PATH=${WORKDIR}/${CONNECTION}/${EXAMPLE}
 
-ENV CATENA_CONNECTION=${CONNECTION}
-ENV CATENA_EXAMPLE=${EXAMPLE}
 # same as the default in the code, but needs to be set here so that the healthcheck can use it
 ENV CATENA_PORT=6254
 ENV CATENA_STATIC_ROOT=${EXAMPLE_CONTAINER_PATH}/static
@@ -32,9 +30,11 @@ COPY --chmod=755 container/healthcheck.sh /healthcheck.sh
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD /healthcheck.sh
 
-RUN mkdir -p ${WORKDIR}/logs && mkdir -p ${CATENA_STATIC_ROOT}
+RUN mkdir -p ${WORKDIR}/logs \
+    && mkdir -p ${CATENA_STATIC_ROOT} \
+    && ln -s ${EXAMPLE_CONTAINER_PATH}/${EXAMPLE} ${WORKDIR}/entrypoint
 
-ENTRYPOINT [ "${EXAMPLE_CONTAINER_PATH}/${EXAMPLE}" ]
+ENTRYPOINT ["./entrypoint"]
 
 FROM base AS REST
 
