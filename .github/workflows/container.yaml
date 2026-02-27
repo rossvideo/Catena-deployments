@@ -267,7 +267,7 @@ jobs:
             out_json[conn] = sorted(out_json[conn])
           # write to examples.json
           with open('examples.json', 'w') as f:
-            json.dump(out_json, f, indent=2)
+            json.dump(out_json, f, indent=2, sort_keys=True)
       
       - name: Print stuff
         run: |
