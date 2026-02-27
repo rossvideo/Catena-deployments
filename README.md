@@ -8,15 +8,6 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 
 ## List of examples
 <!-- EXAMPLES_START -->
-### gRPC
-- audiodeck
-- audiodeck-yaml
-- external-object-request
-- one-of-everything
-- simple-dashboard-audiodeck
-- status-update
-- use-commands
-- use-menus
 ### REST
 - asset-request
 - audiodeck
@@ -25,6 +16,15 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 - one-of-everything
 - status-update
 - status-update-JSON
+- use-commands
+- use-menus
+### gRPC
+- audiodeck
+- audiodeck-yaml
+- external-object-request
+- one-of-everything
+- simple-dashboard-audiodeck
+- status-update
 - use-commands
 - use-menus
 <!-- EXAMPLES_END -->
