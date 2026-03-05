@@ -65,8 +65,6 @@ securityContext: {}
 service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 8443
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -128,4 +126,4 @@ tolerations: []
 
 affinity: {}
 
-dashboard_port: 80
+dashboard_port: 8080
