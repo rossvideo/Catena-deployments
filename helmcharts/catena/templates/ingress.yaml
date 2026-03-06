@@ -19,11 +19,11 @@ spec:
   {{- end }}
   tls:
     - hosts:
-        - {{ include "catena.ingress.host" . }}
+        - {{ printf "st2138-%s" (include "catena.ingress.host" .) | quote }}
       secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
   rules:
-    - host: {{ include "catena.ingress.host" . }}
+    - host: {{ printf "st2138-%s" (include "catena.ingress.host" .) | quote }}
       http:
         paths:
           - path: /
@@ -32,5 +32,5 @@ spec:
               service:
                 name: {{ include "catena.fullname" $ }}
                 port:
-                  number: {{ .Values.service.port }}
+                  number: {{ include "catena.service.port" . }}
 {{- end }}

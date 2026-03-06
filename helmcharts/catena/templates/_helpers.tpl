@@ -78,6 +78,17 @@ Create the tag name from connection/example and tag override
 {{- end }}
 
 {{/*
+Create the ingress catena service port depending on tls enabled
+*/}}
+{{- define "catena.service.port" }}
+{{- if .Values.ingress.tls.enabled -}}
+443
+{{- else -}}
+80
+{{- end }}
+{{- end }}
+
+{{/*
 Create the liveness probe based on connection
 */}}
 {{- define "catena.image.live" }}
@@ -85,7 +96,7 @@ Create the liveness probe based on connection
 {{- toYaml .Values.livenessProbe }}
 {{- else if eq .Values.image.connection "gRPC" -}}
 grpc:
-  port: {{ .Values.service.port }}
+  port: {{ include "catena.service.port" . }}
 {{- else if eq .Values.image.connection "REST" -}}
 httpGet:
   path: /st2138-api/v1/health
@@ -98,8 +109,8 @@ Create the ingress host out of host or hostBase and example/connection
 */}}
 {{- define "catena.ingress.host" }}
 {{- if .Values.ingress.hostBase }}
-{{- printf "%s-%s.%s" .Values.image.example .Values.image.connection .Values.ingress.hostBase | lower | quote }}
+{{- printf "%s-%s.%s" .Values.image.example .Values.image.connection .Values.ingress.hostBase | lower }}
 {{- else }}
-{{- .Values.ingress.host | lower | quote }}
+{{- .Values.ingress.host | lower }}
 {{- end }}
 {{- end }}
