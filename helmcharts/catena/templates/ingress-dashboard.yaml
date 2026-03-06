@@ -5,23 +5,19 @@ metadata:
   name: {{ printf "%s-dashboard" (include "catena.fullname" .) }}
   labels:
     {{- include "catena.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
 spec:
   {{- with .Values.ingress.className }}
   ingressClassName: {{ . }}
   {{- end }}
   rules:
-    - host: {{ include "catena.ingress.host" . }}
+    - host: {{ include "catena.ingress.host" . | quote}}
       http:
         paths:
           - path: /connect/connection-props.xml
             pathType: Prefix
             backend:
               service:
-                name: "dashboard_discovery"
+                name: {{ printf "%s-dashboard" (include "catena.fullname" .) }}
                 port:
                   number: {{ .Values.dashboard_port }}
 {{- end }}

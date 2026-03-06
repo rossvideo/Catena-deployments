@@ -19,11 +19,11 @@ spec:
   {{- end }}
   tls:
     - hosts:
-        - {{ include "catena.ingress.host" . }}
+        - {{ printf "st2138-%s" (include "catena.ingress.host" .) | quote }}
       secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
   rules:
-    - host: {{ include "catena.ingress.host" . }}
+    - host: {{ printf "st2138-%s" (include "catena.ingress.host" .) | quote }}
       http:
         paths:
           - path: /
@@ -33,11 +33,4 @@ spec:
                 name: {{ include "catena.fullname" $ }}
                 port:
                   number: {{ include "catena.service.port" . }}
-          - path: /connect/connection-props.xml
-            pathType: Prefix
-            backend:
-              service:
-                name: "dashboard_discovery"
-                port:
-                  number: {{ .Values.dashboard_port }}
 {{- end }}

@@ -51,9 +51,11 @@ spec:
             - name: CATENA_PORT
               value: {{ include "catena.service.port" . | quote }}
             - name: CATENA_HOSTNAME
-              value: {{ .Values.ingress.host | quote }}
+              value: {{ printf "st2138-%s" (include "catena.ingress.host" .) | quote }}
             - name: CATENA_DASHBOARD_PORT
               value: {{ .Values.dashboard_port | quote }}
+            - name: CATENA_DASHBOARD_TLS_ENABLED
+              value: {{ .Values.ingress.tls.enabled | quote }}
           {{- if .Values.livenessProbeEnabled }}
           livenessProbe:
             {{- include "catena.image.live" . | nindent 12 }}
