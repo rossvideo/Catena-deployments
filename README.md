@@ -14,6 +14,7 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 - audiodeck-JSON
 - discovery
 - one-of-everything
+- simple-audiodeck-JSON
 - status-update
 - status-update-JSON
 - use-commands
