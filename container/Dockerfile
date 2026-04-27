@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcurl4 \
     libavahi-common3 \
     libavahi-client3 \
+    libboost-log1.83.0 \
     libboost-program-options1.83.0 \
     && rm -rf /var/lib/apt/lists/*
 
