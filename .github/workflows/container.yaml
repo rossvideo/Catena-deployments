@@ -2,6 +2,13 @@ name: Build Example images
 
 on:
   workflow_dispatch:
+    inputs:
+      targetBranch:
+        description: 'The git ref to build the examples from (branch, tag, or commit SHA)'
+        required: true
+        default: 'develop'
+
+
   repository_dispatch:
     types: [build-examples]
 
@@ -36,7 +43,7 @@ jobs:
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "Event is workflow_dispatch, proceeding with build."
             echo "triggered=true" >> $GITHUB_OUTPUT
-            echo "trigger_ref=${{ github.ref }}" >> $GITHUB_OUTPUT
+            echo "trigger_ref=${{ inputs.targetBranch }}" >> $GITHUB_OUTPUT
           else
             echo "Event is not repository_dispatch or workflow_dispatch, skipping build."
             echo "triggered=false" >> $GITHUB_OUTPUT
