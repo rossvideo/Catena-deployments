@@ -1,6 +1,7 @@
 name: Build Example images
 
 on:
+  workflow_dispatch:
   repository_dispatch:
     types: [build-examples]
 
