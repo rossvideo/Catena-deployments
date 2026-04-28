@@ -11,6 +11,8 @@ ARG EXAMPLE_CONTAINER_PATH=${WORKDIR}/${CONNECTION}/${EXAMPLE}
 
 # same as the default in the code, but needs to be set here so that the healthcheck can use it
 ENV CATENA_PORT=6254
+# again, set so healthcheck can use it
+ENV CATENA_CONNECTION=${CONNECTION}
 ENV CATENA_STATIC_ROOT=${EXAMPLE_CONTAINER_PATH}/static
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
