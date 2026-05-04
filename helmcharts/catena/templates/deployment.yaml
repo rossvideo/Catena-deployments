@@ -40,6 +40,10 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ include "catena.image.tag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.container.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ include "catena.service.port" . }}
@@ -59,6 +63,9 @@ spec:
             {{- if .Values.container.authz }}
             - name: CATENA_AUTHZ
               value: "on"
+            {{- end }}
+            {{- with .Values.container.extraEnv }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- if .Values.livenessProbeEnabled }}
           livenessProbe:
