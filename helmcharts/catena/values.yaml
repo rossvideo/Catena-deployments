@@ -65,10 +65,10 @@ securityContext: {}
 container:
   # Toggle authorization enforcement on the Catena container.
   authz: false
-  # Optional extra command-line arguments appended to the container entrypoint.
+  # Additional command-line arguments passed to the container entrypoint.
   args: []
   # Additional environment variables.
-  # Example to enable authz by env var:
+  # Is a list of name/value pairs, e.g.
   # extraEnv:
   #   - name: ENV_VAR_NAME
   #     value: some_value
