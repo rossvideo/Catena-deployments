@@ -61,6 +61,19 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+# Runtime settings passed directly to the Catena container.
+container:
+  # Toggle authorization enforcement on the Catena container.
+  authz: false
+  # Additional command-line arguments passed to the container entrypoint.
+  args: []
+  # Additional environment variables.
+  # Is a list of name/value pairs, e.g.
+  # extraEnv:
+  #   - name: ENV_VAR_NAME
+  #     value: some_value
+  extraEnv: []
+
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
