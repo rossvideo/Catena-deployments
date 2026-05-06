@@ -1,0 +1,48 @@
+name: "Update release artifacts"
+description: "Generates examples.json + README, bumps Chart.yaml version/appVersion, and writes chartVersion back to examples.json."
+
+inputs:
+  examples_json:
+    description: "Path to examples.json"
+    required: true
+  chart_yaml:
+    description: "Path to Chart.yaml"
+    required: true
+  readme_path:
+    description: "Path to README to update"
+    required: true
+  new_app_version:
+    description: "New Catena version from build output"
+    required: true
+  new_examples_list:
+    description: "New examples list as JSON string in straight list format e.g [\"gRPC/example-1\", \"REST/example-2\"]"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.11"
+        cache: "pip"                 # pip caching supported by setup-python [3](https://codefresh.io/docs/docs/ci-cd-guides/helm-best-practices/)[4](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+        cache-dependency-path: |
+          .github/actions/examples-update/requirements.txt
+
+    - name: Install Python deps (if any)
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f ".github/actions/examples-update/requirements.txt" ]; then
+          pip install -r .github/actions/examples-update/requirements.txt
+        fi
+
+    - name: Update release artifacts
+      shell: bash
+      env:
+        EXAMPLES_JSON: ${{ inputs.examples_json }}
+        CHART_YAML: ${{ inputs.chart_yaml }}
+        README_PATH: ${{ inputs.readme_path }}
+        NEW_APP_VERSION: ${{ inputs.new_app_version }}
+        EXAMPLES_LIST: ${{ inputs.new_examples_list }}
+      run: |
+        python .github/actions/examples-update/src/update_release.py
