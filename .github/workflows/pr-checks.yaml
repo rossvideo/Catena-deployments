@@ -24,14 +24,21 @@ jobs:
             exit 0
           fi
 
-          BASE_VERSION=$(git show origin/${{ github.base_ref }}:helmcharts/catena-helm/Chart.yaml | grep '^version:' | awk '{print $2}')
-          PR_VERSION=$(grep '^version:' helmcharts/catena-helm/Chart.yaml | awk '{print $2}')
+          CHART_FILE="helmcharts/catena-helm/Chart.yaml"
+
+          if ! git show origin/${{ github.base_ref }}:"$CHART_FILE" > /dev/null 2>&1; then
+            echo "Chart.yaml does not exist on base branch — new chart or renamed chart, skipping version check."
+            exit 0
+          fi
+
+          BASE_VERSION=$(git show origin/${{ github.base_ref }}:"$CHART_FILE" | grep '^version:' | awk '{print $2}')
+          PR_VERSION=$(grep '^version:' "$CHART_FILE" | awk '{print $2}')
 
           echo "Base branch Chart version: $BASE_VERSION"
           echo "PR Chart version:          $PR_VERSION"
 
           if [ "$BASE_VERSION" = "$PR_VERSION" ]; then
-            echo "::error file=helmcharts/catena-helm/Chart.yaml::Chart version ($PR_VERSION) must be bumped when changes are made to the catena Helm chart."
+            echo "::error file=$CHART_FILE::Chart version ($PR_VERSION) must be bumped when changes are made to the catena Helm chart."
             exit 1
           fi
 
