@@ -2,8 +2,12 @@ apiVersion: v2
 name: catena
 description: Helm chart for running Catena examples in kubernetes
 type: application
-# Automatically updated to match the version of the application
-# if a manual update is needed, append a -X to the end of the version
-version: 0.0.20
+# Must be a valid semver, and must be updated any time the chart templates or values
+# are changed. A PR check enforces this. A publish workflow automatically creates a
+# new GitHub release when this version is updated on main.
+# This version is also bumped automatically (patch) by CI when appVersion changes.
+# For manual chart changes, bump the patch version (last number) for small changes,
+# or the minor version (middle number) and reset patch to 0 for larger changes.
+version: 0.1.0
 # Automatically updated to match the version of the application
 appVersion: "0.0.19"
