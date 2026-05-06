@@ -1,0 +1,65 @@
+name: PR Checks
+
+on:
+  pull_request:
+
+jobs:
+  helm-version-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check Chart.yaml version was bumped
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          if ! echo "$CHANGED" | grep -q '^helmcharts/'; then
+            echo "No changes in helmcharts/ — skipping version check."
+            exit 0
+          fi
+
+          BASE_VERSION=$(git show origin/${{ github.base_ref }}:helmcharts/catena/Chart.yaml | grep '^version:' | awk '{print $2}')
+          PR_VERSION=$(grep '^version:' helmcharts/catena/Chart.yaml | awk '{print $2}')
+
+          echo "Base branch Chart version: $BASE_VERSION"
+          echo "PR Chart version:          $PR_VERSION"
+
+          if [ "$BASE_VERSION" = "$PR_VERSION" ]; then
+            echo "::error file=helmcharts/catena/Chart.yaml::Chart version ($PR_VERSION) must be bumped when changes are made to the catena Helm chart."
+            exit 1
+          fi
+
+          echo "Version was bumped from $BASE_VERSION to $PR_VERSION. Check passed."
+
+  action-unit-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .github/actions/examples-update
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/actions/examples-update/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          if [ -s requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Run unit tests
+        working-directory: .github/actions/examples-update/src
+        run: python -m unittest update_release_test -v
