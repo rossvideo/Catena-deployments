@@ -57,7 +57,7 @@ appVersion: "1.2.3"
         new_chart_version = update_release.update_chart_yaml(
             self.chart_yaml_path, new_version
         )
-        # assert the chart version is reved
+        # assert the chart version is revved
         self.assertEqual(new_chart_version, expected_chart_version)
         # read the updated chart.yaml
         with open(self.chart_yaml_path) as f:

@@ -254,7 +254,7 @@ jobs:
         uses: ./.github/actions/examples-update
         with:
           examples_json: "examples.json"
-          chart_yaml: "helmcharts/catena/Chart.yaml"
+          chart_yaml: "helmcharts/catena-helm/Chart.yaml"
           readme_path: "README.md"
           new_app_version: ${{ needs.build-examples.outputs.version }}
           new_examples_list: ${{ needs.build-examples.outputs.examples }}
@@ -262,13 +262,13 @@ jobs:
       - name: Print stuff
         run: |
           cat examples.json
-          cat helmcharts/catena/Chart.yaml
+          cat helmcharts/catena-helm/Chart.yaml
           cat README.md
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          add-paths: examples.json,helmcharts/catena/Chart.yaml,README.md
+          add-paths: examples.json,helmcharts/catena-helm/Chart.yaml,README.md
           commit-message: Update examples.json and Chart.yaml version
           branch: examples-changed
           title: Updates from example build - ${{ needs.build-examples.outputs.version }}
