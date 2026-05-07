@@ -11,6 +11,7 @@
     "use-commands",
     "use-menus"
   ],
+  "chartVersion": "0.1.0",
   "gRPC": [
     "audiodeck",
     "audiodeck-yaml",
