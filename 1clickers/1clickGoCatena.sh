@@ -160,43 +160,19 @@ func main() {
 			"serial_number":      "WORLD001",
 		},
 	}
-	slot1 := struct {
-		mu      sync.RWMutex
-		hello   string
-		counter int32
-		product map[string]any
-	}{
-		hello:   "Hello World!",
-		counter: 0,
-		product: map[string]any{
-			"name":               "Bad Device",
-			"vendor":             "Ross Video",
-			"version":            "1.0.0",
-			"catena_sdk":         "github.com/rossvideo/catena/sdks/go",
-			"catena_sdk_version": "v0.1.0",
-			"serial_number":      "WORLD002",
-		},
-	}
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
 			slot0.mu.Lock()
-			slot1.mu.Lock()
 			slot0.counter++
-			slot1.counter++
 			if slot0.counter > 200 {
 				slot0.counter = 0
 			}
-			if slot1.counter > 200 {
-				slot1.counter = 0
-			}
 			slot0.mu.Unlock()
-			slot1.mu.Unlock()
 
 			srv.BroadcastUpdate(0, "counter", slot0.counter, catena.ScopeAdm)
-			srv.BroadcastUpdate(1, "counter", slot1.counter, catena.ScopeAdm)
 
 		}
 	}()
@@ -299,92 +275,7 @@ func main() {
 
 		return catena.Reply(device)
 	})
-	srv.RegisterGetDeviceHandler(1, func(slot uint16, context catena.HandlerContext) (catena.Device, catena.StatusResult) {
-		slot1.mu.RLock()
-		defer slot1.mu.RUnlock()
 
-		deviceInfo := map[string]any{
-			"slot":              uint32(1),
-			"detail_level":      catena.DetailLevelFull,
-			"multi_set_enabled": true,
-			"subscriptions":     true,
-			"params": map[string]any{
-				"product": map[string]any{
-					"type":      catena.ParamTypeStruct,
-					"read_only": false, // should be true
-					"params": map[string]any{ // missing catena_sdk
-						"name": map[string]any{
-							"read_only": true,
-							"type":      catena.ParamTypeString,
-						},
-						"vendor": map[string]any{
-							"read_only": true,
-							"type":      catena.ParamTypeString,
-						},
-						"version": map[string]any{
-							"read_only": true,
-							"type":      catena.ParamTypeString,
-						},
-						"catena_sdk_version": map[string]any{
-							"read_only": true,
-							"type":      catena.ParamTypeString,
-						},
-						"serial_number": map[string]any{
-							"read_only": true,
-							"type":      catena.ParamTypeString,
-						},
-					},
-					"value": map[string]any{
-						"struct_value": map[string]any{
-							"fields": map[string]any{ // missing catena_sdk & catena_sdk_version values
-								"name": map[string]any{
-									"string_value": slot1.product["name"],
-								},
-								"vendor": map[string]any{
-									"string_value": slot1.product["vendor"],
-								},
-								"version": map[string]any{
-									"string_value": slot1.product["version"],
-								},
-								"serial_number": map[string]any{
-									"string_value": slot1.product["serial_number"],
-								},
-							},
-						},
-					},
-				},
-				"hello_world_txt": map[string]any{
-					"name": map[string]any{
-						"display_strings": map[string]string{
-							"en": "Hello World Text",
-						},
-					},
-					"type": catena.ParamTypeString,
-					"value": map[string]any{
-						"string_value": slot1.hello,
-					},
-				},
-				"counter": map[string]any{
-					"name": map[string]any{
-						"display_strings": map[string]string{
-							"en": "Counter",
-						},
-					},
-					"type": catena.ParamTypeInt32,
-					"value": map[string]any{
-						"int32_value": slot1.counter,
-					},
-				},
-			},
-		}
-
-		device, err := catena.ToDevice(deviceInfo)
-		if err != nil {
-			return catena.ReplyError[catena.Device](catena.StatusCodeInternal, err.Error())
-		}
-
-		return catena.Reply(device)
-	})
 	// -------------
 	// ParamInfo
 	// -------------
@@ -415,33 +306,7 @@ func main() {
 		}
 		return []catena.ParamInfo{info}, catena.StatusWithCode(catena.StatusCodeOk, "")
 	})
-	srv.RegisterParamInfoHandler(1, func(slot uint16, fqoid string, recursive bool, ctx catena.HandlerContext) ([]catena.ParamInfo, catena.StatusResult) {
-		_ = slot
-		var info catena.ParamInfo
-		switch fqoid {
-		case "product":
-			info = catena.NewParamInfo("product", catena.NewPolyglotText(), catena.ParamTypeStruct, "", 0)
-		case "product/name":
-			info = catena.NewParamInfo("product/name", catena.NewPolyglotText(), catena.ParamTypeString, "", 0)
-		case "product/vendor":
-			info = catena.NewParamInfo("product/vendor", catena.NewPolyglotText(), catena.ParamTypeString, "", 0)
-		case "product/version":
-			info = catena.NewParamInfo("product/version", catena.NewPolyglotText(), catena.ParamTypeString, "", 0)
-		case "product/catena_sdk":
-			info = catena.NewParamInfo("product/catena_sdk", catena.NewPolyglotText(), catena.ParamTypeString, "", 0)
-		case "product/catena_sdk_version":
-			info = catena.NewParamInfo("product/catena_sdk_version", catena.NewPolyglotText(), catena.ParamTypeString, "", 0)
-		case "product/serial_number":
-			info = catena.NewParamInfo("product/serial_number", catena.NewPolyglotText(), catena.ParamTypeString, "", 0)
-		case "hello_world_txt":
-			info = catena.NewParamInfo("hello_world_txt", catena.NewPolyglotText(), catena.ParamTypeString, "", 0)
-		case "counter":
-			info = catena.NewParamInfo("counter", catena.NewPolyglotText(), catena.ParamTypeInt32, "", 0)
-		default:
-			return nil, catena.StatusWithCode(catena.StatusCodeNotFound, "parameter not found: "+fqoid)
-		}
-		return []catena.ParamInfo{info}, catena.StatusWithCode(catena.StatusCodeOk, "")
-	})
+
 	// -----------
 	// GetValue
 	// -----------
@@ -476,35 +341,7 @@ func main() {
 		}
 		return catena.Reply(v)
 	})
-	srv.RegisterGetValueHandler(1, func(slot uint16, fqoid string, context catena.HandlerContext) (catena.Value, catena.StatusResult) {
-		_ = slot
-		slot1.mu.RLock()
-		defer slot1.mu.RUnlock()
-		var v catena.Value
-		var res catena.StatusResult
-		switch fqoid { // missing product/name case
-		case "product":
-			v, res = catena.ToValue(slot1.product)
-		case "product/vendor":
-			v, res = catena.ToValue(slot1.product["vendor"])
-		case "product/version":
-			v, res = catena.ToValue(slot1.product["version"])
-		case "product/catena_sdk":
-			v, res = catena.ToValue(slot1.product["catena_sdk"])
-		case "product/catena_sdk_version":
-			v, res = catena.ToValue(slot1.product["catena_sdk_version"])
-		case "product/serial_number":
-			v, res = catena.ToValue(slot1.product["serial_number"])
-		case "hello_world_txt":
-			v, res = catena.ToValue(slot1.hello)
-		case "counter":
-			v, res = catena.ToValue(slot1.counter)
-		}
-		if res.Code != catena.StatusCodeOk {
-			return catena.ReplyError[catena.Value](catena.StatusCodeInternal, res.Error)
-		}
-		return catena.Reply(v)
-	})
+
 	// ----------
 	// SetValue
 	// ----------
@@ -544,47 +381,6 @@ func main() {
 
 		return catena.StatusWithCode(catena.StatusCodeOk, "")
 	})
-	srv.RegisterSetValueHandler(1, func(slot uint16, entries []catena.SetValueEntry, context catena.HandlerContext) catena.StatusResult {
-		_ = slot
-		_ = context
-		slot1.mu.Lock()
-		defer slot1.mu.Unlock()
-
-		for _, entry := range entries {
-			switch entry.Fqoid {
-			case "hello_world_txt":
-				if _, ok := entry.Value.(string); !ok {
-					return catena.StatusWithCode(catena.StatusCodeInvalidArgument, fmt.Sprintf(entry.Fqoid+" must be a valid type got type %T", entry.Value))
-				}
-			case "counter":
-				if _, ok := entry.Value.(int32); !ok {
-					return catena.StatusWithCode(catena.StatusCodeInvalidArgument, fmt.Sprintf(entry.Fqoid+" must be a valid type got type %T", entry.Value))
-				}
-			case "product/vendor": // this shouldnt work
-				if _, ok := entry.Value.(string); !ok {
-					return catena.StatusWithCode(catena.StatusCodeInvalidArgument, fmt.Sprintf(entry.Fqoid+" must be a valid type got type %T", entry.Value))
-				}
-			case "product", "product/name", "product/version", "product/catena_sdk", "product/catena_sdk_version", "product/serial_number":
-				return catena.StatusWithCode(catena.StatusCodePermissionDenied, "protected parameter: "+entry.Fqoid)
-			default:
-				return catena.StatusWithCode(catena.StatusCodeNotFound, "parameter not found: "+entry.Fqoid)
-			}
-		}
-
-		for _, entry := range entries {
-			switch entry.Fqoid {
-			case "hello_world_txt":
-				slot1.hello = entry.Value.(string)
-			case "counter":
-				slot1.counter = entry.Value.(int32)
-			case "product/vendor": // this shouldnt work
-				slot1.product["vendor"] = entry.Value.(string)
-			}
-			srv.BroadcastUpdate(1, entry.Fqoid, entry.Value, catena.ScopeAdm)
-		}
-
-		return catena.StatusWithCode(catena.StatusCodeOk, "")
-	})
 
 	if err := srv.RegisterTransport(transports.NewRestTransport(transports.RestOptions{Port: 6255})); err != nil {
 		log.Fatal(err)
@@ -604,6 +400,7 @@ func main() {
 	defer cancel()
 	srv.Shutdown(shutdownCtx)
 }
+
 
 
 EOF
