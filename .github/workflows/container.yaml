@@ -215,7 +215,7 @@ jobs:
         - ${{ github.workspace }}/Catena:/app
       options: --user root:root
       env:
-        IN_CONTAINER_BUILD: true # tells smpte scripts to allow running as root
+        IN_CONTAINER_BUILD: "1" # tells smpte scripts to allow running as root
         BUILD_TARGET: build/cpp
         CMAKE_INSTALL_PREFIX: /usr/local/.local
         CONNECTIONS: gRPC;REST
