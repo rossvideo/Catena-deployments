@@ -11,7 +11,7 @@
     "use-commands",
     "use-menus"
   ],
-  "chartVersion": "0.1.0",
+  "chartVersion": "0.1.2",
   "gRPC": [
     "audiodeck",
     "audiodeck-yaml",
@@ -26,5 +26,5 @@
     "hello-world",
     "one-of-everything"
   ],
-  "version": "0.0.19"
+  "version": "0.0.23"
 }
