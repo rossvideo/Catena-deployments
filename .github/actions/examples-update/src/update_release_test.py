@@ -36,7 +36,12 @@ appVersion: "1.2.3"
     def make_readme(self):
         with open(self.readme_path, "w") as f:
             f.write("""# Test README
-## List of examples
+## Go SDK examples
+<!-- GO_EXAMPLES_START -->
+- go-old
+<!-- GO_EXAMPLES_END -->
+
+## C++ SDK examples
 <!-- EXAMPLES_START -->
 ### REST
 - example-1
@@ -113,6 +118,21 @@ appVersion: "1.2.3"
         output = update_release.process_examples_list(json.dumps(examples_list_json))
         self.assertEqual(output, expected_output)
 
+    def test_process_examples_list_with_go(self):
+        examples_list_json = [
+            "gRPC/example-1",
+            "REST/example-1",
+            "go/one-of-everything",
+            "go/hello-world",
+        ]
+        expected_output = {
+            "REST": ["example-1"],
+            "gRPC": ["example-1"],
+            "go": ["hello-world", "one-of-everything"],
+        }
+        output = update_release.process_examples_list(json.dumps(examples_list_json))
+        self.assertEqual(output, expected_output)
+
     @property
     def examples_json_path(self):
         return os.path.join(self.output_dir, "examples.json")
@@ -154,6 +174,37 @@ appVersion: "1.2.3"
         self.assertIn("<!-- EXAMPLES_END -->", updated)
         # content after the end marker should be preserved
         self.assertIn("## Next Section", updated)
+
+    def test_update_readme_with_go(self):
+        new_examples_dict = {
+            "REST": ["example-1"],
+            "gRPC": ["example-2"],
+            "go": ["one-of-everything", "hello-world"],
+        }
+        self.make_readme()
+        update_release.update_readme(self.readme_path, new_examples_dict)
+        with open(self.readme_path) as f:
+            updated = f.read()
+        self.assertIn(
+            "<!-- GO_EXAMPLES_START -->\n- hello-world\n- one-of-everything\n<!-- GO_EXAMPLES_END -->",
+            updated,
+        )
+        self.assertIn(
+            "<!-- EXAMPLES_START -->\n### REST\n- example-1\n### gRPC\n- example-2\n<!-- EXAMPLES_END -->",
+            updated,
+        )
+        # go must not get its own heading in the C++ block
+        self.assertNotIn("### go", updated)
+        self.assertNotIn("- go-old", updated)
+        self.assertIn("## Next Section", updated)
+
+    def test_update_readme_without_go_clears_go_list(self):
+        self.make_readme()
+        update_release.update_readme(self.readme_path, {"REST": ["example-1"]})
+        with open(self.readme_path) as f:
+            updated = f.read()
+        self.assertIn("<!-- GO_EXAMPLES_START -->\n<!-- GO_EXAMPLES_END -->", updated)
+        self.assertIn("### REST\n- example-1", updated)
 
 
 if __name__ == "__main__":

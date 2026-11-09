@@ -7,55 +7,202 @@ on:
         description: 'The git ref to build the examples from (branch, tag, or commit SHA)'
         required: true
         default: 'develop'
-
+      force:
+        description: 'Rebuild all images even if they are up to date'
+        type: boolean
+        default: false
 
   repository_dispatch:
     types: [build-examples]
 
+  push:
+    branches: [main]
+    paths:
+      - 'container/**'
+      - '.github/workflows/container.yaml'
+
 env:
   REGISTRY: ghcr.io
-  CMAKE_INSTALL_PREFIX: /usr/local/.local
-  CONNECTIONS: gRPC;REST
-  BUILD_TARGET: build/cpp
+  IMAGE: ghcr.io/rossvideo/catena
+  SHA_LABEL: com.rossvideo.catena.sha
   WORKDIR: /app
+  # image tag format, shared by the stale check in plan and the metadata-action steps
+  TAG_SUFFIX: -dev
+  GO_TAG_PREFIX: go-
 
 jobs:
-  check-trigger:
+  plan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     outputs:
-      triggered: ${{ steps.check.outputs.triggered }}
-      trigger_ref: ${{ steps.check.outputs.trigger_ref }}
+      catena_sha: ${{ steps.catena.outputs.sha }}
+      version: ${{ steps.catena.outputs.version }}
+      go_examples: ${{ steps.catena.outputs.go_examples }}
+      build_cpp: ${{ steps.check.outputs.build_cpp }}
+      build_go: ${{ steps.check.outputs.build_go }}
     steps:
-      - name: Check for repository_dispatch event
-        id: check
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Detect container changes
+        id: changes
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            cpp:
+              - 'container/Dockerfile'
+              - 'container/healthcheck.sh'
+              - '.github/workflows/container.yaml'
+            go:
+              - 'container/go/**'
+              - '.github/workflows/container.yaml'
+
+      - name: Resolve Catena ref
+        id: ref
+        env:
+          EVENT: ${{ github.event_name }}
+          PAYLOAD_REF: ${{ github.event.client_payload.ref }}
+          INPUT_REF: ${{ inputs.targetBranch }}
         run: |
-          if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
-            echo "Event is repository_dispatch, proceeding with build."
-            echo "triggered=true" >> $GITHUB_OUTPUT
-            if [ -n "${{ github.event.client_payload.ref }}" ]; then
-              echo "Trigger ref: ${{ github.event.client_payload.ref }}"
-              echo "trigger_ref=${{ github.event.client_payload.ref }}" >> $GITHUB_OUTPUT
-            else
-              echo "No ref provided in client_payload, failing build."
-              echo "triggered=false" >> $GITHUB_OUTPUT
-              exit 1
-            fi
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "Event is workflow_dispatch, proceeding with build."
-            echo "triggered=true" >> $GITHUB_OUTPUT
-            echo "trigger_ref=${{ inputs.targetBranch }}" >> $GITHUB_OUTPUT
-          else
-            echo "Event is not repository_dispatch or workflow_dispatch, skipping build."
-            echo "triggered=false" >> $GITHUB_OUTPUT
+          case "$EVENT" in
+            repository_dispatch) REF="$PAYLOAD_REF" ;;
+            workflow_dispatch) REF="$INPUT_REF" ;;
+            *) REF=develop ;;
+          esac
+          if [[ -z "$REF" ]]; then
+            echo "::error::No Catena ref provided for $EVENT"
+            exit 1
           fi
+          echo "Catena ref: $REF"
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+
+      # full history (trees only, blobs fetched lazily) so the stale check can diff against the commit each image was built from
+      - name: Checkout Catena (sparse)
+        uses: actions/checkout@v7
+        with:
+          path: Catena
+          ref: ${{ steps.ref.outputs.ref }}
+          repository: rossvideo/Catena
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /VERSION.txt
+            /sdks/go/examples/
+
+      - name: Inspect Catena
+        id: catena
+        working-directory: Catena
+        run: |
+          SHA=$(git rev-parse HEAD)
+          VERSION=$(sed -nE '1s/^v?([0-9][^[:space:]]*).*/\1/p' VERSION.txt)
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::Could not parse version from VERSION.txt"
+            exit 1
+          fi
+          # Go build matrix (also reused by the stale check): dir is the package under examples/, name is the kebab-case image name
+          GO_EXAMPLES=$(find sdks/go/examples -mindepth 2 -maxdepth 2 -name main.go -printf '%h\n' \
+            | sed 's#.*/##' | sort \
+            | jq -Rnc '[inputs | select(length > 0) | {dir: ., name: (gsub("(?<a>[a-z0-9])(?<b>[A-Z])"; "\(.a)-\(.b)") | gsub("_"; "-") | ascii_downcase)}]')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "go_examples=${GO_EXAMPLES:-[]}" >> "$GITHUB_OUTPUT"
+          echo "Catena SHA: $SHA"
+          echo "Version: $VERSION"
+          echo "Go examples: $GO_EXAMPLES"
+
+      - name: Check published images
+        id: check
+        env:
+          FORCE: ${{ inputs.force == true }}
+          CPP_CHANGED: ${{ steps.changes.outputs.cpp == 'true' }}
+          GO_CHANGED: ${{ steps.changes.outputs.go == 'true' }}
+          SHA: ${{ steps.catena.outputs.sha }}
+          GO_EXAMPLES: ${{ steps.catena.outputs.go_examples }}
+          GH_USER: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Catena paths that only affect one SDK's images. A change to a path claimed by another SDK
+          # doesn't rebuild this one; changes to unclaimed paths (smpte, scripts, ...) rebuild everything.
+          # Only claim paths you're sure about.
+          declare -A CLAIMS=(
+            [cpp]="sdks/cpp/ .devcontainer/cpp/ unittests/cpp/ tools/codegen/"
+            [go]="sdks/go/ .devcontainer/go/"
+          )
+
+          # usage: is_stale SDK TAG...
+          # prints true if there's nothing to check, any tag is missing/unlabelled, or Catena changed
+          # between the commit a tag was built from and $SHA in a path not claimed by another SDK
+          is_stale() {
+            local SDK=$1; shift
+            if [[ $# -eq 0 ]]; then echo true; return; fi
+
+            local EXCLUDES=() OTHER P
+            for OTHER in "${!CLAIMS[@]}"; do
+              [[ "$OTHER" == "$SDK" ]] && continue
+              for P in ${CLAIMS[$OTHER]}; do EXCLUDES+=(":(exclude)$P"); done
+            done
+
+            local -A CHECKED=()
+            local TAG BUILT CHANGED
+            for TAG in "$@"; do
+              BUILT=$(skopeo inspect --no-tags --creds "${GH_USER}:${GH_TOKEN}" "docker://${IMAGE}:${TAG}" 2>/dev/null \
+                | jq -r --arg l "$SHA_LABEL" '.Labels[$l] // empty') || BUILT=""
+              if [[ -z "$BUILT" ]]; then
+                echo "${TAG} is stale (missing or no ${SHA_LABEL} label)" >&2
+                echo true
+                return
+              fi
+              [[ "$BUILT" == "$SHA" || -n "${CHECKED[$BUILT]:-}" ]] && continue
+              CHECKED[$BUILT]=1
+              if ! git -C Catena cat-file -e "${BUILT}^{commit}" 2>/dev/null; then
+                echo "${TAG} is stale (built from ${BUILT}, which isn't in Catena's history)" >&2
+                echo true
+                return
+              fi
+              CHANGED=$(git -C Catena diff --no-renames --name-only "$BUILT" "$SHA" -- . "${EXCLUDES[@]}")
+              if [[ -n "$CHANGED" ]]; then
+                echo "${TAG} is stale (built from ${BUILT}; ${SDK}-relevant changes since then):" >&2
+                head -n 20 <<< "$CHANGED" | sed 's/^/  /' >&2
+                echo true
+                return
+              fi
+              echo "${SDK}: nothing ${SDK}-relevant changed between ${BUILT} and ${SHA}" >&2
+            done
+            echo false
+          }
+
+          mapfile -t CPP_TAGS < <(jq -r --arg s "$TAG_SUFFIX" '(.gRPC // [] | .[] | "\(.)-gRPC\($s)"), (.REST // [] | .[] | "\(.)-REST\($s)")' examples.json)
+          mapfile -t GO_TAGS < <(jq -r --arg p "$GO_TAG_PREFIX" --arg s "$TAG_SUFFIX" '.[] | "\($p)\(.name)\($s)"' <<< "$GO_EXAMPLES")
+
+          if [[ "$FORCE" == true || "$CPP_CHANGED" == true ]]; then
+            BUILD_CPP=true
+          else
+            BUILD_CPP=$(is_stale cpp "${CPP_TAGS[@]}")
+          fi
+
+          if [[ "$GO_EXAMPLES" == "[]" ]]; then
+            BUILD_GO=false
+          elif [[ "$FORCE" == true || "$GO_CHANGED" == true ]]; then
+            BUILD_GO=true
+          else
+            BUILD_GO=$(is_stale go "${GO_TAGS[@]}")
+          fi
+
+          echo "build_cpp=$BUILD_CPP" >> "$GITHUB_OUTPUT"
+          echo "build_go=$BUILD_GO" >> "$GITHUB_OUTPUT"
+          echo "Build C++: $BUILD_CPP"
+          echo "Build Go: $BUILD_GO"
 
   build-examples:
     runs-on: ubuntu-latest
-    needs: check-trigger
-    if: needs.check-trigger.outputs.triggered == 'true'
+    needs: plan
+    if: needs.plan.outputs.build_cpp == 'true'
     outputs:
       examples: ${{ steps.generate-matrix.outputs.examples }}
-      version: ${{ steps.get-version.outputs.version }}
     container:
       image: ghcr.io/rossvideo/catena-cpp-toolchain:latest
       credentials:
@@ -66,20 +213,20 @@ jobs:
         - ${{ github.workspace }}/Catena:/app
       options: --user root:root
       env:
+        IN_CONTAINER_BUILD: "1" # tells smpte scripts to allow running as root
         BUILD_TARGET: build/cpp
         CMAKE_INSTALL_PREFIX: /usr/local/.local
         CONNECTIONS: gRPC;REST
-        WORKDIR: /app
 
     permissions:
       contents: read
     
     steps:
       - name: Checkout Catena
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: Catena
-          ref: ${{ needs.check-trigger.outputs.trigger_ref }}
+          ref: ${{ needs.plan.outputs.catena_sha }}
           repository: rossvideo/Catena
           submodules: 'recursive'
 
@@ -144,14 +291,6 @@ jobs:
             EXAMPLES_JSON="[${EXAMPLES_JSON%,}]"
             echo "examples=${EXAMPLES_JSON}" >> $GITHUB_OUTPUT
 
-      - name: Get version
-        id: get-version
-        run: |
-          # Extract version from VERSION.txt
-          VERSION=$(sed -nE 's/[^-]+-v([^-]+)-.*/\1/p' ${WORKDIR}/sdks/cpp/VERSION.txt)
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Version: ${VERSION}"
-
       - name: Print examples
         run: |
           echo "Examples found:"
@@ -162,7 +301,7 @@ jobs:
 
   build-and-push-single-examples:
     runs-on: ubuntu-latest
-    needs: build-examples
+    needs: [plan, build-examples]
     strategy:
       matrix:
         example: ${{ fromJson(needs.build-examples.outputs.examples) }}
@@ -172,7 +311,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download examples
         uses: actions/download-artifact@v4
@@ -198,7 +337,7 @@ jobs:
           echo "EXAMPLE=${EXAMPLE}"
 
       - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -207,16 +346,17 @@ jobs:
       # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/rossvideo/catena
           # -dev suffix for now, until we figure out building on main
           tags: |
-            type=raw,suffix=-dev,value=${{ steps.process-name.outputs.example }}
+            type=raw,suffix=${{ env.TAG_SUFFIX }},value=${{ steps.process-name.outputs.example }}
           labels: |
             org.opencontainers.image.title=Catena ${{ steps.process-name.outputs.example }}
             org.opencontainers.image.description=Self contained example for Catena ${{ steps.process-name.outputs.example }}
             org.opencontainers.image.vendor=Ross Video
+            ${{ env.SHA_LABEL }}=${{ needs.plan.outputs.catena_sha }}
 
       - name: Print stuff
         run: |
@@ -225,7 +365,7 @@ jobs:
           find .
       
       - name: Build and push image for ${{ matrix.example }}
-        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: container/Dockerfile
@@ -239,25 +379,116 @@ jobs:
             EXAMPLE_PATH=${{ steps.process-name.outputs.example_path }}
             WORKDIR=${{ env.WORKDIR }}
 
+  build-and-push-go-examples:
+    runs-on: ubuntu-latest
+    needs: plan
+    if: needs.plan.outputs.build_go == 'true'
+    strategy:
+      matrix:
+        example: ${{ fromJson(needs.plan.outputs.go_examples) }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Checkout Catena
+        uses: actions/checkout@v7
+        with:
+          path: Catena
+          ref: ${{ needs.plan.outputs.catena_sha }}
+          repository: rossvideo/Catena
+
+      - name: Get Go version
+        id: go-version
+        run: |
+          GO_VERSION=$(sed -nE 's/^go ([0-9][0-9.]*).*/\1/p' Catena/sdks/go/go.mod)
+          if [[ -z "$GO_VERSION" ]]; then
+            echo "::error::Could not find go directive in sdks/go/go.mod"
+            exit 1
+          fi
+          echo "Go version: $GO_VERSION"
+          echo "go_version=$GO_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,prefix=${{ env.GO_TAG_PREFIX }},suffix=${{ env.TAG_SUFFIX }},value=${{ matrix.example.name }}
+          labels: |
+            org.opencontainers.image.title=Catena Go ${{ matrix.example.name }}
+            org.opencontainers.image.description=Self contained Go SDK example for Catena ${{ matrix.example.name }}
+            org.opencontainers.image.vendor=Ross Video
+            ${{ env.SHA_LABEL }}=${{ needs.plan.outputs.catena_sha }}
+
+      - name: Build and push Go image for ${{ matrix.example.name }}
+        uses: docker/build-push-action@v7
+        with:
+          context: Catena
+          file: container/go/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            EXAMPLE=${{ matrix.example.dir }}
+            GO_VERSION=${{ steps.go-version.outputs.go_version }}
+
   update-examples:
     runs-on: ubuntu-latest
-    needs: build-examples
+    needs: [plan, build-examples, build-and-push-single-examples, build-and-push-go-examples]
+    if: >-
+      !cancelled() && !contains(needs.*.result, 'failure') &&
+      (needs.plan.outputs.build_cpp == 'true' || needs.plan.outputs.build_go == 'true')
     permissions:
       contents: write
       pull-requests: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-    
+        uses: actions/checkout@v7
+
+      # languages that weren't rebuilt keep their existing entries from examples.json
+      - name: Collect examples
+        id: collect
+        env:
+          BUILD_CPP: ${{ needs.plan.outputs.build_cpp }}
+          BUILD_GO: ${{ needs.plan.outputs.build_go }}
+          CPP_EXAMPLES: ${{ needs.build-examples.outputs.examples }}
+          GO_EXAMPLES: ${{ needs.plan.outputs.go_examples }}
+        run: |
+          if [[ "$BUILD_CPP" == true ]]; then
+            CPP="$CPP_EXAMPLES"
+          else
+            CPP=$(jq -c '[(.gRPC // [] | .[] | "gRPC/\(.)"), (.REST // [] | .[] | "REST/\(.)")]' examples.json)
+          fi
+          if [[ "$BUILD_GO" == true ]]; then
+            GO=$(jq -c '[.[] | "go/\(.name)"]' <<< "$GO_EXAMPLES")
+          else
+            GO=$(jq -c '[.go // [] | .[] | "go/\(.)"]' examples.json)
+          fi
+          EXAMPLES=$(jq -nc --argjson a "$CPP" --argjson b "$GO" '$a + $b')
+          echo "examples=$EXAMPLES" >> "$GITHUB_OUTPUT"
+          echo "Examples: $EXAMPLES"
+
       - name: Update Examples
         uses: ./.github/actions/examples-update
         with:
           examples_json: "examples.json"
           chart_yaml: "helmcharts/catena-helm/Chart.yaml"
           readme_path: "README.md"
-          new_app_version: ${{ needs.build-examples.outputs.version }}
-          new_examples_list: ${{ needs.build-examples.outputs.examples }}
+          new_app_version: ${{ needs.plan.outputs.version }}
+          new_examples_list: ${{ steps.collect.outputs.examples }}
 
       - name: Print stuff
         run: |
@@ -271,7 +502,7 @@ jobs:
           add-paths: examples.json,helmcharts/catena-helm/Chart.yaml,README.md
           commit-message: Update examples.json and Chart.yaml version
           branch: examples-changed
-          title: Updates from example build - ${{ needs.build-examples.outputs.version }}
+          title: Updates from example build - ${{ needs.plan.outputs.version }}
           body: This PR updates the repo with the new examples.json content, README examples section, and bumps the version/appVersion in Chart.yaml. This is an automated PR created by the build workflow after building the example images.
           reviewers: 'abrown-RV,NR-RV,ctwarog-ross'
           delete-branch: true
