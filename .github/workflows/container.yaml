@@ -21,8 +21,6 @@ on:
       - 'container/**'
       - '.github/workflows/container.yaml'
 
-  pull_request:
-
 env:
   REGISTRY: ghcr.io
   IMAGE: ghcr.io/rossvideo/catena
