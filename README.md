@@ -100,7 +100,7 @@ docker run --name catena -p 6254:6254 -p 9080:9080 \
   ghcr.io/rossvideo/catena:go-one-of-everything-dev
 ```
 
-Every option can also be passed as a command-line flag after the image name (e.g. `-use-grpc -use-rest`). Run `-help` to see the full list:
+Run `-help` to see every option. Each one lists its environment variable:
 ```
 docker run --rm ghcr.io/rossvideo/catena:go-one-of-everything-dev -help
 ```
@@ -120,6 +120,9 @@ Common options:
 | `CATENA_LOG_LEVEL` | `INFO` | Minimum log level to output. |
 
 TLS (`CATENA_GRPC_TLS_*`, `CATENA_REST_TLS_*`), JWT (`CATENA_JWT_*`) and DashBoard (`CATENA_DASHBOARD_*`) settings are also available; see `-help`.
+
+> [!TIP]
+> Options can also be passed as command-line flags after the image name (e.g. `-use-rest`), but prefer environment variables. The container's healthcheck only reads environment variables, so a container configured with flags will report as unhealthy.
 
 ### C++ SDK images
 Tags are `<example>-<transport>-dev`, for example `one-of-everything-gRPC-dev`. Each image serves only the transport in its name.
