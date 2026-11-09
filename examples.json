@@ -22,5 +22,9 @@
     "use-commands",
     "use-menus"
   ],
+  "go": [
+    "hello-world",
+    "one-of-everything"
+  ],
   "version": "0.0.19"
 }

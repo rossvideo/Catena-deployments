@@ -83,25 +83,39 @@ def write_examples_json(examples_json_path, examples_dict, app_version, chart_ve
     )
 
 
+GO_KEY = "go"
+
+
+def _replace_between_markers(text, name, lines):
+    start_marker = f"<!-- {name}_START -->"
+    end_marker = f"<!-- {name}_END -->"
+    start_idx = text.index(start_marker) + len(start_marker)
+    end_idx = text.index(end_marker)
+    body = "\n" + "\n".join(lines) + "\n" if lines else "\n"
+    return text[:start_idx] + body + text[end_idx:]
+
+
 def update_readme(readme_path, examples_dict):
-    """Replace content between <!-- EXAMPLES_START --> and <!-- EXAMPLES_END --> markers."""
-    lines = []
-    for conn in sorted(examples_dict):
-        lines.append(f"### {conn}")
-        for ex in sorted(examples_dict[conn]):
-            lines.append(f"- {ex}")
+    """Rewrite the README example lists.
+
+    C++ examples go between <!-- EXAMPLES_START/END --> grouped under a heading per
+    transport; Go examples go between <!-- GO_EXAMPLES_START/END --> as a flat list,
+    since one Go image serves every transport.
+    """
+    cpp_lines = []
+    for conn in sorted(k for k in examples_dict if k != GO_KEY):
+        cpp_lines.append(f"### {conn}")
+        cpp_lines.extend(f"- {ex}" for ex in sorted(examples_dict[conn]))
+    go_lines = [f"- {ex}" for ex in sorted(examples_dict.get(GO_KEY, []))]
 
     with open(readme_path) as f:
         readme = f.read()
 
-    start_marker = "<!-- EXAMPLES_START -->"
-    end_marker = "<!-- EXAMPLES_END -->"
-    start_idx = readme.index(start_marker) + len(start_marker)
-    end_idx = readme.index(end_marker)
-    new_readme = readme[:start_idx] + "\n" + "\n".join(lines) + "\n" + readme[end_idx:]
+    readme = _replace_between_markers(readme, "EXAMPLES", cpp_lines)
+    readme = _replace_between_markers(readme, "GO_EXAMPLES", go_lines)
 
     with open(readme_path, "w") as f:
-        f.write(new_readme)
+        f.write(readme)
     print(f"Updated {readme_path} with new examples list")
 
 

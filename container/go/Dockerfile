@@ -1,7 +1,10 @@
 # syntax=docker/dockerfile:1
 
+# should match the go directive in sdks/go/go.mod
+ARG GO_VERSION=1.26
+
 # ---- build stage -------------------------------------------------------------
-FROM golang:1.23 AS build
+FROM golang:${GO_VERSION} AS build
 
 ARG EXAMPLE
 ARG SDK_PATH=sdks/go
@@ -18,7 +21,7 @@ COPY ${SDK_PATH}/ ./
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" \
     -o /out/entrypoint ./examples/${EXAMPLE} \
     && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" \
-    -o /out/healthprobe ./cmd/healthprobe
+    -o /out/healthprobe ./cmd/catena-healthcheck
 
 # ---- runtime stage -----------------------------------------------------------
 FROM gcr.io/distroless/static:nonroot AS runtime

@@ -15,7 +15,7 @@ inputs:
     description: "New Catena version from build output"
     required: true
   new_examples_list:
-    description: "New examples list as JSON string in straight list format e.g [\"gRPC/example-1\", \"REST/example-2\"]"
+    description: "New examples list as JSON string in straight list format e.g [\"gRPC/example-1\", \"REST/example-2\", \"go/example-3\"]"
     required: true
 
 runs:
