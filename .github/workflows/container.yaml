@@ -497,12 +497,12 @@ jobs:
           cat README.md
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           add-paths: examples.json,helmcharts/catena-helm/Chart.yaml,README.md
           commit-message: Update examples.json and Chart.yaml version
           branch: examples-changed
           title: Updates from example build - ${{ needs.plan.outputs.version }}
           body: This PR updates the repo with the new examples.json content, README examples section, and bumps the version/appVersion in Chart.yaml. This is an automated PR created by the build workflow after building the example images.
-          reviewers: 'abrown-RV,NR-RV,ctwarog-ross'
+          reviewers: 'abrown-RV,NR-RV'
           delete-branch: true
