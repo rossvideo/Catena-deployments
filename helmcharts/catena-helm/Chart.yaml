@@ -8,6 +8,6 @@ type: application
 # This version is also bumped automatically (patch) by CI when appVersion changes.
 # For manual chart changes, bump the patch version (last number) for small changes,
 # or the minor version (middle number) and reset patch to 0 for larger changes.
-version: 0.1.1
+version: 0.1.2
 # Automatically updated to match the version of the application
-appVersion: "0.0.19"
+appVersion: "0.0.23"
