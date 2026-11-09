@@ -6,7 +6,7 @@ Contains containerized catena service examples and associated IAC (e.g. helm cha
 - [Report Issues](https://github.com/rossvideo/Catena/issues)
 - [Github for this repo](https://github.com/rossvideo/Catena-deployments)
 - [Test Your Catena](https://github.com/rossvideo/st2138-tester)
-- [st2138 OpenTofu Provider](https://search.opentofu.org/provider/rossvideo/st2138/latest)
+- [ST 2138 OpenTofu Provider](https://search.opentofu.org/provider/rossvideo/st2138/latest)
 
 ## Choosing an image
 Every image is a Catena example device you can point a client at. Examples are built from two SDKs:
